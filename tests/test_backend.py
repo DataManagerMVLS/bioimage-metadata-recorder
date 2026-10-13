@@ -135,7 +135,7 @@ def test_bia_study_file_list(client):
     }, headers={"X-API-Key": "local-test-secret"})
     assert response.status_code == 200
     rows = response.get_data(as_text=True).splitlines()
-    assert rows[0].startswith("Files\\t")
+    assert rows[0].startswith("Files" + chr(9))
     assert "sample1/raw.tif" in rows[1]
     assert len(rows) == 3
 
@@ -148,7 +148,7 @@ def test_bia_annotation_file_list_and_validation(client):
          "metadata": {"Annotation type": "segmentation"}}]}
     response = http.post("/api/bia-file-list", json=good, headers=headers)
     assert response.status_code == 200
-    assert response.get_data(as_text=True).splitlines()[0].startswith("Files\\tsource_image")
+    assert response.get_data(as_text=True).splitlines()[0].startswith("Files" + chr(9) + "source_image")
     good["files"][0]["path"] = "../secret.txt"
     assert http.post("/api/bia-file-list", json=good, headers=headers).status_code == 400
     assert http.post("/api/bia-file-list", json=good).status_code == 401
