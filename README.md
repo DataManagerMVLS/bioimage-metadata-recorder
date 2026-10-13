@@ -6,6 +6,22 @@ Open `index.html` in a browser to try it. Records are stored locally in the brow
 
 See `docs/hackathon-plan.md` for the development plan and [GitHub issues](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues) for priorities, especially [#12: effortless researcher-led metadata capture and PI buy-in](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/12).
 
+## Hackathon: contribute today
+
+**Help us make bioimaging metadata capture easy enough to use in real laboratories.** We welcome microscope users, imaging facility staff, research data managers, developers and anyone with experience of REMBI or BioImage Archive submissions.
+
+**Choose one practical contribution:**
+
+1. **Try the prototype:** open [the browser app](https://datamanagermvls.github.io/bioimage-metadata-recorder/) (check that GitHub Pages has deployed), or download the repository and open `index.html`. Enter **synthetic, non-sensitive** acquisition and analysis metadata; note confusing fields or missing information.
+2. **Test the full workflow:** create a study and acquisition, link one or more analyses, export the records, reload them and check that the links survive. Report problems in [issue #2](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/2) or [#3](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/3).
+3. **Review REMBI and archive readiness:** identify essential metadata fields, suggest controlled vocabularies, and assess the draft BioImage Archive mapping ([#1](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/1), [#5](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/5)).
+4. **Reduce researcher effort:** propose defaults, reuse of microscope-generated metadata, batch handling for large collections, and traceability from images to analyses and figures ([#12](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/12)).
+5. **Contribute code or documentation:** choose an [open issue](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues), discuss your approach, work on a feature branch and submit a pull request.
+
+**To get involved:** the [GitHub repository](https://github.com/DataManagerMVLS/bioimage-metadata-recorder) is currently **private**. Send the repository owner your **GitHub username** for a collaborator invitation. You can also share feedback during the hackathon Zoom session. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow.
+
+**What would make today a success?** A tested example linking **study → acquisition → analysis**, a short prioritised list of metadata gaps, and at least one change that measurably reduces the effort for a microscope user. No real patient or confidential research data should be used for testing.
+
 ## Why this tool exists
 
 Ann Wheeler's University of Edinburgh presentation, *No Cost, No Tech, No Excuses! Bioimaging Data Management*, sets out the practical challenge: microscopy data is generated across distributed facilities and often lives on network-attached storage (NAS), USB drives or other imperfect infrastructure. A useful metadata workflow must work **without requiring specialist IT support or expensive new systems**, and should scale to better infrastructure later.
