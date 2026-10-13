@@ -1,7 +1,4 @@
 # Bioimage Metadata Recorder
-
-## 🌐 [OPEN THE BIOIMAGE METADATA RECORDER IN YOUR BROWSER](https://datamanagermvls.github.io/bioimage-metadata-recorder/)
-
 **[▶ LAUNCH THE WEB APPLICATION](https://datamanagermvls.github.io/bioimage-metadata-recorder/)** · [View the HTML source](index.html)
 
 > **Hackathon prototype.** The browser link uses GitHub Pages; deployment and full functionality have not yet been independently verified. If the link is unavailable, download `index.html` and open it locally in a browser. Offline operation and exports still require testing. Records may be held in browser storage: export backups regularly. No direct BioImage Archive submission is provided.
