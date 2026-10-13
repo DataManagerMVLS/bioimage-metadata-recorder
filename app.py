@@ -196,7 +196,7 @@ def bia_file_list():
             extra.add(key)
     columns = ["Files"] + (["source_image"] if annotation else []) + sorted(extra)
     output = io.StringIO(newline="")
-    writer = csv.DictWriter(output, fieldnames=columns, delimiter="\\t", lineterminator="\\n")
+    writer = csv.DictWriter(output, fieldnames=columns, delimiter=chr(9), lineterminator=chr(10))
     writer.writeheader()
     for item in files:
         row = {"Files": item["path"]}
