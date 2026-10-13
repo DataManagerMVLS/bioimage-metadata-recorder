@@ -4,6 +4,8 @@ Reconstruction based on the existing index.html API, not the original backend.
 Not approved for public deployment or sensitive research data.
 """
 import base64
+import csv
+import io
 import binascii
 import json
 import os
@@ -138,6 +140,73 @@ def submit():
     return jsonify(saved=str(folder.relative_to(DATA_DIR)), emailed=emailed,
                    recipients=allowed if emailed else [], rejected=rejected,
                    email_error=email_error)
+
+
+
+
+def _archive_path(value):
+    """Validate BioImage Archive-relative file paths (not local filesystem paths)."""
+    if not isinstance(value, str) or not value or len(value) > 1024:
+        return False
+    if "\\\\" in value or value.startswith(("/", "./", "../")) or "//" in value:
+        return False
+    if any(part in ("", ".", "..") for part in value.split("/")):
+        return False
+    if any(ord(char) < 32 or char in '<>:"|?*' for char in value):
+        return False
+    return True
+
+
+@app.post("/api/bia-file-list")
+def bia_file_list():
+    """Create a draft BIA TSV file list from explicit, already-uploaded file paths.
+
+    Input: {"component": "study"|"annotations", "files": [
+      {"path": "sample/image.tif", "source_image": "sample/source.tif",
+       "metadata": {"Channel": "DAPI"}}]}
+
+    This does not upload files, verify their existence, or submit to the archive.
+    """
+    if not API_KEY:
+        return jsonify(error="API_KEY must be configured"), 503
+    if request.headers.get("X-API-Key") != API_KEY:
+        return jsonify(error="Unauthorized"), 401
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or body.get("component") not in ("study", "annotations"):
+        return jsonify(error="Invalid component"), 400
+    files = body.get("files")
+    if not isinstance(files, list) or not 1 <= len(files) <= 5000:
+        return jsonify(error="Provide 1 to 5000 file entries"), 400
+    annotation = body["component"] == "annotations"
+    reserved = {"Files", "source_image"}
+    extra = set()
+    for item in files:
+        if not isinstance(item, dict) or not _archive_path(item.get("path")):
+            return jsonify(error="Invalid relative file path"), 400
+        if annotation and not _archive_path(item.get("source_image")):
+            return jsonify(error="Annotations require a valid source_image"), 400
+        metadata = item.get("metadata", {})
+        if not isinstance(metadata, dict) or len(metadata) > 30:
+            return jsonify(error="Invalid metadata"), 400
+        for key, value in metadata.items():
+            if not isinstance(key, str) or not key.strip() or key in reserved or len(key) > 80:
+                return jsonify(error="Invalid metadata column"), 400
+            if not isinstance(value, (str, int, float, bool)) or len(str(value)) > 2000:
+                return jsonify(error="Invalid metadata value"), 400
+            extra.add(key)
+    columns = ["Files"] + (["source_image"] if annotation else []) + sorted(extra)
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=columns, delimiter="\\t", lineterminator="\\n")
+    writer.writeheader()
+    for item in files:
+        row = {"Files": item["path"]}
+        if annotation:
+            row["source_image"] = item["source_image"]
+        row.update({key: str(value).replace("\\t", " ").replace("\\n", " ")
+                    for key, value in item.get("metadata", {}).items()})
+        writer.writerow(row)
+    return app.response_class(output.getvalue(), mimetype="text/tab-separated-values",
+                              headers={"Content-Disposition": "attachment; filename=bia-file-list.tsv"})
 
 
 @app.errorhandler(413)
