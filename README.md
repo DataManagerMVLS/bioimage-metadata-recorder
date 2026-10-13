@@ -26,6 +26,16 @@ The following contributors should be explicitly recognised for their roles:
 
 See [CITATION.cff](CITATION.cff) for the software citation. The author order and final attribution should be reviewed and agreed with the contributors. **Software authorship does not itself establish copyright ownership**; the MIT licence and any rights in the original code should be confirmed with the relevant rights holders.
 
+### Related manuscript and wider collaborators
+
+The associated manuscript referred to as **“No cost recovery…”** includes the following author list supplied by the project team (in the order supplied):
+
+Stephen Fox; Laura Murphy; Moni Choudry; Ewan MacDonald; John Ireland; Matthew Hartley; Ayebuke Kupcu Yoldas; Isabel Kemmer; Ann Wheeler.
+
+This is a **manuscript author acknowledgement, not an assertion that every manuscript author wrote the software**. A complete bibliographic reference (confirmed title, publication status, year, journal and DOI, if available) should be added once verified. Software citation authorship remains separately documented in `CITATION.cff` and should be agreed by the contributors.
+
+**Name verification needed:** the manuscript list supplied uses **Ewan MacDonald**, whereas the original application developer has been identified as **Ewan McDowall**. Confirm whether these are different people or a spelling discrepancy before reconciling the records.
+
 ## Background reading
 
 - [Data management for bioimaging: no-cost, easy-access tools for Edinburgh](https://libraryblogs.is.ed.ac.uk/datablog/2026/01/13/data-management-for-bioimaging-no-cost-easy-access-tools-for-edinburgh/) — University of Edinburgh Data Blog (13 January 2026). Context for practical bioimaging data management and metadata recording.
