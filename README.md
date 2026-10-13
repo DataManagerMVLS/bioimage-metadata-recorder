@@ -4,9 +4,15 @@ Prototype for recording REMBI-aligned light microscopy acquisition and image ana
 
 Open `index.html` in a browser to try it. Records are stored locally in the browser; export backups regularly. This is a hackathon prototype and does not directly submit to BioImage Archive.
 
-See `docs/hackathon-plan.md` for the development plan.
+See `docs/hackathon-plan.md` for the development plan and [GitHub issues](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues) for priorities, especially [#12: effortless researcher-led metadata capture and PI buy-in](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/12).
 
-The Flask backend is not included. Licence and ownership require agreement with collaborators before public release.
+## Collaboration and branch protection
+
+The repository is private; collaborators need a GitHub invitation. Develop on feature branches and open pull requests into `main`. A `Protect main` ruleset has been configured to require pull requests, preventing direct README updates. Recommended settings include blocking force pushes and deletion; verify the actual rules in [repository settings](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/settings/rules). For the hackathon, keep required approvals at zero until collaborators can review, and leave Copilot-specific additional approvals off. Add required CI status checks once the check name and passing state are verified.
+
+The draft BioImage Archive file-list export is not a dataset submission or upload. Backend tests: `python -m pytest -q tests/test_backend.py`.
+
+A provisional Flask backend (`app.py`) is included, but the original GitLab `app.py` still needs to be obtained and compared. This repository was recreated because the original GitLab repository was inaccessible; it was not migrated. Licence, ownership and permissions require agreement with collaborators before public release.
 
 ## Background reading
 
