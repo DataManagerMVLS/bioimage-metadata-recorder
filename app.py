@@ -60,7 +60,7 @@ def ontology():
 
 def recipients_from(value):
     if not isinstance(value, str):
-        return []
+        return [], []
     candidates = [v.strip() for v in re.split(r"[;,]", value) if v.strip()]
     valid = [v for v in candidates if re.fullmatch(r"[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+", v)]
     domains = {d.strip().lower() for d in os.environ.get("ALLOWED_EMAIL_DOMAINS", "").split(",") if d.strip()}
