@@ -98,3 +98,29 @@ def test_ontology_input_validation(client):
     http, _ = client
     assert http.get("/api/ontology?ontology=bad%2Furl&q=test").status_code == 400
     assert http.get("/api/ontology?ontology=ncbitaxon&q=").status_code == 400
+
+
+@pytest.mark.parametrize("kind", ["acquisition", "analysis"])
+def test_browser_contract_with_realistic_record(client, kind):
+    """Simulate the exact JSON payload posted by index.html, including XLSX."""
+    http, data_dir = client
+    body = payload(kind)
+    body["record"]["acquisition"].update({
+        "biosample": "Synthetic fixed cells",
+        "specimen": "Fictional slide A",
+        "sessions": [{"date": "2026-10-13", "microscope": "Confocal",
+                      "lens": "40x", "channels": "DAPI"}],
+    })
+    body["record"]["analyses"] = [{
+        "software": "ImageJ", "input_path": "fictional/input",
+        "output_path": "fictional/output", "description": "Synthetic segmentation"
+    }]
+    response = http.post("/api/submit", json=body,
+                         headers={"X-API-Key": "local-test-secret"})
+    assert response.status_code == 200
+    folder = data_dir / response.json["saved"]
+    saved = json.loads((folder / "submission.json").read_text(encoding="utf-8"))
+    assert saved["record"]["acquisition"]["sessions"][0]["microscope"] == "Confocal"
+    assert saved["record"]["analyses"][0]["software"] == "ImageJ"
+    assert zipfile.is_zipfile(folder / "attachment-1.xlsx")
+    assert response.json["emailed"] is False
