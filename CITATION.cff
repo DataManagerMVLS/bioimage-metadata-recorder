@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use or adapt the Bioimage Metadata Recorder, please cite this software. Please retain the MIT licence notice as well."
+message: "If you use or adapt the Bioimage Metadata Recorder, please cite this software. Licensing and reuse permissions are under review."
 title: "Bioimage Metadata Recorder"
 type: software
 authors:
@@ -14,7 +14,6 @@ authors:
 abstract: "A prototype for recording REMBI-aligned microscopy study, image acquisition and analysis metadata to support FAIR bioimaging workflows."
 repository-code: "https://github.com/DataManagerMVLS/bioimage-metadata-recorder"
 url: "https://github.com/DataManagerMVLS/bioimage-metadata-recorder"
-license: MIT
 keywords:
   - bioimaging
   - microscopy
