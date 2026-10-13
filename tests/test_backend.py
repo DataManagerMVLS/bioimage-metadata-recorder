@@ -124,3 +124,31 @@ def test_browser_contract_with_realistic_record(client, kind):
     assert saved["record"]["analyses"][0]["software"] == "ImageJ"
     assert zipfile.is_zipfile(folder / "attachment-1.xlsx")
     assert response.json["emailed"] is False
+
+
+def test_bia_study_file_list(client):
+    http, _ = client
+    response = http.post("/api/bia-file-list", json={
+        "component": "study",
+        "files": [{"path": "sample1/raw.tif", "metadata": {"Channel": "DAPI", "Replicate": "1"}},
+                  {"path": "sample1/processed.tif", "metadata": {"Channel": "FITC"}}]
+    }, headers={"X-API-Key": "local-test-secret"})
+    assert response.status_code == 200
+    rows = response.get_data(as_text=True).splitlines()
+    assert rows[0].startswith("Files\\t")
+    assert "sample1/raw.tif" in rows[1]
+    assert len(rows) == 3
+
+
+def test_bia_annotation_file_list_and_validation(client):
+    http, _ = client
+    headers = {"X-API-Key": "local-test-secret"}
+    good = {"component": "annotations", "files": [
+        {"path": "annotations/mask.tif", "source_image": "raw/image.tif",
+         "metadata": {"Annotation type": "segmentation"}}]}
+    response = http.post("/api/bia-file-list", json=good, headers=headers)
+    assert response.status_code == 200
+    assert response.get_data(as_text=True).splitlines()[0].startswith("Files\\tsource_image")
+    good["files"][0]["path"] = "../secret.txt"
+    assert http.post("/api/bia-file-list", json=good, headers=headers).status_code == 400
+    assert http.post("/api/bia-file-list", json=good).status_code == 401
