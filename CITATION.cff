@@ -3,7 +3,14 @@ message: "If you use or adapt the Bioimage Metadata Recorder, please cite this s
 title: "Bioimage Metadata Recorder"
 type: software
 authors:
-  - name: "Bioimage Metadata Recorder contributors"
+  - family-names: Wheeler
+    given-names: Ann
+    affiliation: University of Edinburgh
+  - family-names: McDowall
+    given-names: Ewan
+  - family-names: Fox
+    given-names: Stephen
+    affiliation: University of Glasgow
 abstract: "A prototype for recording REMBI-aligned microscopy study, image acquisition and analysis metadata to support FAIR bioimaging workflows."
 repository-code: "https://github.com/DataManagerMVLS/bioimage-metadata-recorder"
 url: "https://github.com/DataManagerMVLS/bioimage-metadata-recorder"
