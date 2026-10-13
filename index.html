@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bioimage Metadata Recorder (REMBI)</title>
+<style>
+  :root { --accent:#1f5f99; --accent-light:#e6f0fa; --bg:#f4f6f9; --border:#cfd8e3; --missing:#fde2e2; --danger:#b42318; }
+  * { box-sizing:border-box; }
+  body { font-family:system-ui, -apple-system, "Segoe UI", sans-serif; margin:0; background:var(--bg); color:#1a202c; }
+  header { background:var(--accent); color:#fff; padding:1rem 1.5rem; }
+  header h1 { margin:0; font-size:1.35rem; }
+  header details { margin-top:.5rem; font-size:.9rem; }
+  header summary { cursor:pointer; opacity:.95; }
+  header ol { margin:.4rem 0 0; padding-left:1.3rem; }
+  .layout { display:grid; grid-template-columns:260px 1fr; gap:1rem; padding:1rem 1.5rem 5rem; }
+  aside { background:#fff; border:1px solid var(--border); border-radius:8px; padding:1rem; align-self:start; position:sticky; top:1rem; }
+  aside h2 { font-size:1rem; margin:0 0 .6rem; }
+  aside ul { list-style:none; padding:0; margin:.8rem 0; max-height:50vh; overflow:auto; }
+  .rec { width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:6px; padding:.5rem; margin-bottom:.4rem; cursor:pointer; display:flex; flex-direction:column; }
+  .rec.active { border-color:var(--accent); background:var(--accent-light); }
+  .rec small { color:#4a5568; }
+  .side-note { font-size:.78rem; color:#4a5568; }
+  nav { display:flex; gap:.3rem; flex-wrap:wrap; }
+  nav button { padding:.6rem 1rem; border:1px solid var(--border); border-bottom:none; background:#e2e8f0; cursor:pointer; border-radius:6px 6px 0 0; font-size:.95rem; }
+  nav button.active { background:#fff; font-weight:600; }
+  main { background:#fff; border:1px solid var(--border); border-radius:0 8px 8px 8px; padding:1.2rem; }
+  fieldset { border:1px solid var(--border); border-radius:8px; margin:0 0 1.2rem; padding:1rem; }
+  legend { font-weight:600; color:var(--accent); padding:0 .4rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:500; background:var(--accent-light); color:var(--accent); border-radius:10px; padding:.1rem .5rem; margin-left:.3rem; }
+  .note { font-size:.85rem; color:#4a5568; margin:.2rem 0 .8rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:.9rem; }
+  .field { display:flex; flex-direction:column; gap:.25rem; }
+  .field.wide { grid-column:1 / -1; }
+  .field > span { font-weight:500; font-size:.92rem; }
+  .field small { color:#4a5568; font-size:.8rem; }
+  .field.linked input, .field.linked textarea { background:#f1f5f9; color:#334155; }
+  input, select, textarea { padding:.45rem; border:1px solid var(--border); border-radius:4px; font:inherit; width:100%; }
+  .missing input, .missing select, .missing textarea, td.missing input { background:var(--missing); border-color:var(--danger); }
+  .table-wrap { overflow-x:auto; margin-top:.8rem; }
+  .table-wrap h4 { margin:.2rem 0 .4rem; }
+  table { border-collapse:collapse; width:100%; min-width:760px; }
+  th, td { border:1px solid var(--border); padding:.3rem; text-align:left; font-size:.88rem; vertical-align:top; }
+  th { background:#f1f5f9; }
+  td input { border:none; padding:.3rem; }
+  button { font:inherit; }
+  button.small { padding:.25rem .6rem; font-size:.85rem; cursor:pointer; border:1px solid var(--border); background:#fff; border-radius:4px; margin-top:.4rem; }
+  .actions { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1rem; }
+  .actions button, .primary { padding:.45rem .9rem; border-radius:4px; border:1px solid var(--accent); background:#fff; color:var(--accent); cursor:pointer; }
+  .actions button:first-child, .primary { background:var(--accent); color:#fff; }
+  .actions button.danger { border-color:var(--danger); color:var(--danger); background:#fff; }
+  .picker { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:1rem; }
+  .chip { border:1px solid var(--border); background:#fff; border-radius:16px; padding:.3rem .8rem; cursor:pointer; }
+  .chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .empty { text-align:center; padding:2rem; color:#4a5568; }
+  pre { background:#0f172a; color:#e2e8f0; padding:1rem; border-radius:6px; overflow-x:auto; font-size:.85rem; }
+  .toolbar { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border); padding:.6rem 1.5rem; display:flex; gap:1rem; align-items:center; font-size:.9rem; }
+  #status { margin-left:auto; color:#4a5568; }
+  /* Ontology lookup */
+  .ont-chip { display:block; font-size:.75rem; color:#64748b; margin-top:.15rem; }
+  .ont-chip.ok a { color:#166534; text-decoration:none; font-weight:500; }
+  .ont-chip.warn { color:#9a6700; }
+  .ont-dd { position:fixed; z-index:1000; background:#fff; border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.15); overflow:auto; }
+  .ont-opt { padding:.45rem .6rem; cursor:pointer; border-bottom:1px solid #eef2f7; display:flex; flex-wrap:wrap; gap:.2rem .6rem; align-items:baseline; }
+  .ont-opt:hover { background:var(--accent-light); }
+  .ont-id { font-family:ui-monospace, monospace; font-size:.78rem; color:var(--accent); }
+  .ont-opt small { flex-basis:100%; color:#64748b; font-size:.75rem; }
+  .ont-msg { padding:.5rem .6rem; font-size:.8rem; color:#64748b; }
+  @media (max-width:800px) { .layout { grid-template-columns:1fr; } aside { position:static; } }
+  @media print {
+    header details, aside, nav, .toolbar, .actions, .picker, button { display:none !important; }
+    .layout { display:block; padding:0; } main { border:none; }
+    input, select, textarea { border:none; border-bottom:1px solid #999; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bioimage Metadata Recorder</h1>
+  <details>
+    <summary>How to structure your data (REMBI / BioImage Archive)</summary>
+    <ol>
+      <li><strong>Study</strong>: the overall project (ideally the same as your folder name)</li>
+      <li><strong>Biosample</strong>: the organism or source material</li>
+      <li><strong>Specimen</strong>: what was imaged and how it was prepared</li>
+      <li><strong>Image acquisition</strong>: microscope, lens, channels and replicates</li>
+      <li><strong>Image data</strong>: where the raw data are stored</li>
+      <li><strong>Analysed data</strong>: one analysis form per analysis. The same images can be analysed many times.</li>
+    </ol>
+  </details>
+</header>
+
+<div class="layout">
+  <aside>
+    <h2>Study records</h2>
+    <button class="primary" id="newRecord" style="width:100%">+ New study record</button>
+    <ul id="recordList"></ul>
+    <p class="side-note">Records are saved in this browser only. Export regularly and keep the files with your data.</p>
+  </aside>
+  <section>
+    <nav id="tabs"></nav>
+    <main id="view"></main>
+  </section>
+</div>
+
+<div class="toolbar">
+  <span id="progressWrap">Required fields complete: <progress id="progress" max="100" value="0"></progress> <span id="pct"></span></span>
+  <span id="status"></span>
+</div>
+<input type="file" id="importFile" accept=".json" hidden>
+<div id="datalists"></div>
+
+<script>
+/* ================== FACILITY CONFIGURATION ================== */
+const CONFIG = {
+  backendUrl: "",        // Flask server URL if the HTML is NOT served by Flask, e.g. "https://bioimage.example.ac.uk"
+  apiKey: "",            // Optional, must match API_KEY on the Flask server
+  powerAutomateUrl: "",  // Optional: HTTP trigger URL of a Power Automate flow (used if no Flask server)
+  facilityEmail: "",     // Pre-fills the facility contact on new forms
+  microscopes: ["Widefield","Confocal","Spinning disk confocal","Light sheet","Multiphoton","Super-resolution (SIM)",
+                "Super-resolution (STED)","Super-resolution (SMLM)","Slide scanner","High content screening system","Brightfield"],
+  lenses: ["4x","10x","20x","40x","40x oil","60x oil","63x oil","100x oil","20x water","40x water","25x silicone"],
+  software: ["Fiji / ImageJ","CellProfiler","QuPath","napari","Imaris","ilastik","Cellpose","StarDist","Huygens",
+             "Arivis","OMERO","Python","R","MATLAB","GraphPad Prism"],
+  formats: ["CSV","XLSX","OME-TIFF","TIFF","OME-Zarr","ROI set (.zip)","PNG","Label image / masks","Other"]
+};
+
+/* ================== ONTOLOGIES ==================
+   Online search uses EMBL-EBI OLS. "local" entries work offline: [label, ID, synonyms].
+   FBbi offline entries have no IDs; IDs are fetched live from OLS to avoid errors. */
+const ONTOLOGIES = {
+  ncbitaxon: { name: "NCBI Taxonomy", ols: "ncbitaxon", local: [
+    ["Homo sapiens","NCBITaxon:9606","human"], ["Mus musculus","NCBITaxon:10090","mouse house mouse"],
+    ["Rattus norvegicus","NCBITaxon:10116","rat"], ["Danio rerio","NCBITaxon:7955","zebrafish"],
+    ["Drosophila melanogaster","NCBITaxon:7227","fruit fly"], ["Caenorhabditis elegans","NCBITaxon:6239","nematode worm"],
+    ["Saccharomyces cerevisiae","NCBITaxon:4932","budding yeast"], ["Schizosaccharomyces pombe","NCBITaxon:4896","fission yeast"],
+    ["Arabidopsis thaliana","NCBITaxon:3702","thale cress"], ["Xenopus laevis","NCBITaxon:8355","african clawed frog"],
+    ["Gallus gallus","NCBITaxon:9031","chicken"], ["Pan troglodytes","NCBITaxon:9598","chimpanzee"],
+    ["Escherichia coli","NCBITaxon:562","e. coli bacteria"] ]},
+  fbbi: { name: "FBbi imaging methods", ols: "fbbi", local: [
+    ["wide-field microscopy",""], ["fluorescence microscopy",""], ["confocal microscopy",""],
+    ["laser scanning confocal microscopy",""], ["spinning disk confocal microscopy",""],
+    ["light sheet fluorescence microscopy",""], ["two-photon laser scanning microscopy",""],
+    ["bright-field microscopy",""], ["phase contrast microscopy",""], ["differential interference contrast microscopy",""],
+    ["structured illumination microscopy (SIM)",""], ["stimulated emission depletion microscopy (STED)",""],
+    ["single molecule localization microscopy (SMLM)",""], ["total internal reflection fluorescence microscopy (TIRF)",""] ]},
+  celltissue: { name: "Cell Ontology / UBERON", ols: "cl,uberon", local: [] }
+};
+
+/* ================== FORM SCHEMAS ================== */
+const F = (id, label, type = "text", o = {}) => ({ id, label, type, ...o });
+
+const ACQ = [
+  { title: "Form details", fields: [
+    F("date_filled", "Date filled in", "date", { req: true }),
+    F("version", "Version", "number", { readonly: true, help: "Use 'Save as new version' to update" }),
+  ]},
+  { title: "Contacts", rembi: "Study (contacts)",
+    note: "Used to send copies of this form to the PI, data owner and facility, as described in the manuscript.", fields: [
+    F("submitter_name", "Your name", "text", { req: true }),
+    F("submitter_email", "Your email", "email"),
+    F("pi_name", "PI / Grant holder"),
+    F("pi_email", "PI email", "email"),
+    F("owner_email", "Data owner email (if different)", "email"),
+    F("facility_email", "Facility staff / Research data manager email", "email"),
+  ]},
+  { title: "Study", rembi: "Study", fields: [
+    F("study_name", "Study Name", "text", { req: true, wide: true,
+      help: "If you don't have a paper title a running title is OK. Ideally make this match the name of the folder." }),
+  ]},
+  { title: "Biosample", rembi: "Biosample", fields: [
+    F("biosample", "Biosample", "text", { req: true, ont: "ncbitaxon",
+      help: "e.g. Danio rerio or Pan troglodytes. Choose a suggestion to link the NCBI Taxonomy ID." }),
+  ]},
+  { title: "Specimen overview", rembi: "Specimen", fields: [
+    F("specimen_overview", "Specimen overview", "textarea", { req: true,
+      help: "What the specimen is, including any mutations and any treatments, e.g. X concentration of drug for Y hours." }),
+    F("specimen_type", "Cell type / tissue (optional)", "text", { ont: "celltissue",
+      help: "Searches the Cell Ontology (CL) and UBERON anatomy ontology." }),
+  ]},
+  { title: "Sample preparation", rembi: "Specimen", fields: [
+    F("prep_medium", "Prepared on", "select", { req: true,
+      options: ["Coverslips","Glass slides","Glass-bottom dish","Multi-well plate","Chamber slide","Tissue section on slide","Whole mount","Other"] }),
+    F("fixation", "Fixation", "select", { req: true,
+      options: ["Live / unfixed","4% Paraformaldehyde (EM grade)","100% Methanol","Glutaraldehyde","PFA + Glutaraldehyde","Other"] }),
+    F("fixation_details", "Fixation details", "text", { help: "Time, temperature, other fixatives" }),
+    F("contrast", "Contrast method", "select", {
+      options: ["Fluorescence","Brightfield","Phase contrast","DIC","Polarised light","Label-free / other"] }),
+    F("prep_other", "Other preparation details", "textarea",
+      { help: "Any other information about how the sample was prepared or how contrast was generated." }),
+  ],
+    table: { id: "reagents", title: "Staining: dyes and antibodies",
+      help: "Include the epitope, dyes or antibodies used, with manufacturer and product code.",
+      cols: [
+        { id: "target", label: "Target / epitope", req: true },
+        { id: "reagent", label: "Dye or antibody (incl. conjugate)", req: true },
+        { id: "manufacturer", label: "Manufacturer" },
+        { id: "product_code", label: "Product code" },
+        { id: "dilution", label: "Dilution / concentration" },
+      ]}
+  },
+  { title: "Image acquisition", rembi: "Image acquisition",
+    table: { id: "sessions", title: "Acquisition sessions (one row per session / replicate)",
+      cols: [
+        { id: "date", label: "Date", type: "date", req: true },
+        { id: "microscope", label: "Microscope", list: "microscopes", req: true, ph: "e.g. Confocal" },
+        { id: "method", label: "Imaging method (FBbi)", ont: "fbbi", ph: "e.g. confocal microscopy" },
+        { id: "replicate", label: "Replicate", req: true, ph: "1" },
+        { id: "acquired_by", label: "Acquired by", req: true },
+        { id: "lens", label: "Lens", list: "lenses", ph: "40x" },
+        { id: "channels", label: "Channel info", ph: "405, 488, 561" },
+        { id: "other", label: "Other info", ph: "e.g. FRAP used to look at protein dynamics" },
+      ]}
+  },
+  { title: "Data location and methods", rembi: "Image data", fields: [
+    F("data_location", "Location of data on Datastore", "text", { req: true, wide: true,
+      help: "Full path to the raw data. For a pen drive, record where the data will be stored permanently." }),
+    F("imaging_method", "Method for imaging", "textarea", { help: "Methods text, as it would appear in a paper." }),
+    F("comments", "Comments", "textarea"),
+  ]},
+];
+
+const ANA = [
+  { title: "Form details", fields: [
+    F("date", "Date", "date", { req: true }),
+    F("analyst_name", "Analysed by", "text", { req: true }),
+    F("analyst_email", "Analyst email", "email"),
+  ]},
+  { title: "Linked image dataset", rembi: "Study / Biosample / Specimen",
+    note: "Filled in automatically from the Image Acquisition form for this study.", fields: [
+    F("study", "Study", "text", { linked: "study_name" }),
+    F("biosample", "Biosample", "text", { linked: "biosample", ont: "ncbitaxon" }),
+    F("specimen", "Specimen", "textarea", { linked: "specimen_overview" }),
+  ]},
+  { title: "Analysis", rembi: "Analysed data", fields: [
+    F("folder_path", "Image Analysis Folder Path", "text", { req: true, wide: true }),
+    F("details", "Details of analysis done", "textarea", { req: true }),
+    F("images_analysed", "Images analysed", "textarea", { req: true, help: "Which images / replicates / sessions were included" }),
+    F("input_path", "Path for input data", "text", { req: true }),
+    F("output_path", "Path for output data", "text", { req: true }),
+  ]},
+  { title: "Analysis steps", rembi: "Analysed data",
+    table: { id: "steps", title: "Analyses performed",
+      cols: [
+        { id: "name", label: "Name", req: true, ph: "e.g. Nuclear segmentation" },
+        { id: "date_analysed", label: "Date analysed", type: "date" },
+        { id: "software", label: "Software used (incl. version)", list: "software", req: true },
+        { id: "output_format", label: "Output data format", list: "formats" },
+      ]}
+  },
+  { title: "Statistics and comments", fields: [
+    F("stats_location", "Statistical analysis location", "text", { wide: true }),
+    F("comments", "Comments", "textarea"),
+  ]},
+];
+
+/* ================== STATE & HELPERS ================== */
+const STORE = "bioimage-rembi-recorder-v1";
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const today = () => new Date().toISOString().slice(0, 10);
+const safe = s => String(s || "").trim().replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
+const clone = o => JSON.parse(JSON.stringify(o));
+const valOnt = (o, k) => { const v = String(o[k] ?? "").trim(); return v && o[k + "_id"] ? `${v} [${o[k + "_id"]}]` : v; };
+const fv = (d, o) => d.ont ? valOnt(o, d.id) : String(o[d.id] ?? "");
+const rowHasData = o => Object.entries(o || {}).some(([k, v]) => !k.endsWith("_id") && String(v ?? "").trim());
+
+let db;
+try { db = JSON.parse(localStorage.getItem(STORE)) || { records: [] }; } catch { db = { records: [] }; }
+let state = { tab: "acq", ana: 0, showMissing: false };
+let backend = "", backendInfo = null;
+const cur = () => db.records.find(r => r.id === db.currentId);
+const canSubmit = () => !!(backend || CONFIG.powerAutomateUrl);
+
+const newAcq = () => ({ date_filled: today(), version: 1, facility_email: CONFIG.facilityEmail, reagents: [{}], sessions: [{}] });
+const newAna = () => ({ date: today(), steps: [{}] });
+
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(db)); $("status").textContent = "Saved in this browser at " + new Date().toLocaleTimeString(); }
+  catch { $("status").textContent = "Autosave unavailable: please export your record"; }
+}
+function persist() { save(); renderSidebar(); updateProgress(); }
+
+function newRecord() {
+  const r = { id: uid(), created: new Date().toISOString(), acquisition: newAcq(), analyses: [], history: [] };
+  db.records.unshift(r); db.currentId = r.id; state = { tab: "acq", ana: 0, showMissing: false };
+  save(); renderAll();
+}
+
+/* ================== ONTOLOGY LOOKUP ================== */
+const ontCache = new Map();
+let ddEl = null, ddTimer = null;
+const closeDD = () => { if (ddEl) { ddEl.remove(); ddEl = null; } };
+window.addEventListener("scroll", e => { if (ddEl && !ddEl.contains(e.target)) closeDD(); }, true);
+window.addEventListener("resize", closeDD);
+const olsLink = id => `https://www.ebi.ac.uk/ols4/search?q=${encodeURIComponent(id)}`;
+
+async function searchOntology(key, q) {
+  const ont = ONTOLOGIES[key], ql = q.toLowerCase(), ck = key + "|" + ql;
+  if (ontCache.has(ck)) return ontCache.get(ck);
+  const local = ont.local.filter(([l, , s]) => l.toLowerCase().includes(ql) || (s || "").includes(ql))
+                         .map(([label, id]) => ({ label, id }));
+  let remote = null;
+  try {
+    const url = backend
+      ? `${backend}/api/ontology?ontology=${encodeURIComponent(ont.ols)}&q=${encodeURIComponent(q)}`
+      : `https://www.ebi.ac.uk/ols4/api/select?ontology=${encodeURIComponent(ont.ols)}&q=${encodeURIComponent(q)}&type=class&rows=10&fieldList=label,obo_id,description`;
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(url, { signal: ctrl.signal }); clearTimeout(t);
+    if (!res.ok) throw new Error(res.status);
+    const js = await res.json();
+    remote = (js.response?.docs || []).filter(d => d.obo_id && d.label)
+      .map(d => ({ label: d.label, id: d.obo_id, desc: [].concat(d.description || [])[0] || "" }));
+  } catch { /* offline or blocked: fall back to local list */ }
+  const verified = local.filter(t => t.id), unverified = local.filter(t => !t.id);
+  const seen = new Set(verified.map(t => t.label.toLowerCase()));
+  const items = [...verified];
+  (remote || []).forEach(t => { if (!seen.has(t.label.toLowerCase())) { seen.add(t.label.toLowerCase()); items.push(t); } });
+  if (!remote) unverified.forEach(t => { if (!seen.has(t.label.toLowerCase())) items.push(t); });
+  const out = { items: items.slice(0, 12), online: !!remote };
+  if (remote) ontCache.set(ck, out);
+  return out;
+}
+
+function showDD(inp, items, online, onPick) {
+  closeDD();
+  const r = inp.getBoundingClientRect();
+  ddEl = el("div", "ont-dd");
+  ddEl.style.left = r.left + "px";
+  ddEl.style.top = (r.bottom + 2) + "px";
+  ddEl.style.width = Math.max(r.width, 340) + "px";
+  ddEl.style.maxHeight = Math.max(150, Math.min(320, window.innerHeight - r.bottom - 12)) + "px";
+  if (!onPick) ddEl.append(el("div", "ont-msg", "Searching…"));
+  else {
+    if (!items.length) ddEl.append(el("div", "ont-msg", "No matching terms. You can keep your own text."));
+    items.forEach(t => {
+      const o = el("div", "ont-opt");
+      o.append(el("strong", null, t.label), el("span", "ont-id", t.id || "offline: ID not available"));
+      if (t.desc) o.append(el("small", null, t.desc.slice(0, 160)));
+      o.addEventListener("mousedown", e => { e.preventDefault(); onPick(t); });
+      ddEl.append(o);
+    });
+    if (!online) ddEl.append(el("div", "ont-msg", "Offline: showing the built-in list only. Connect to the internet for full ontology search."));
+  }
+  document.body.append(ddEl);
+}
+
+function attachOntology(inp, key, obj, field, host) {
+  const idKey = field + "_id", ont = ONTOLOGIES[key], chip = el("span", "ont-chip");
+  const paint = () => {
+    chip.innerHTML = ""; chip.className = "ont-chip";
+    if (obj[idKey]) {
+      const a = el("a", null, "✓ " + obj[idKey]); a.href = olsLink(obj[idKey]); a.target = "_blank"; a.rel = "noopener";
+      chip.append(a); chip.classList.add("ok");
+    } else if (String(obj[field] || "").trim()) {
+      chip.textContent = `Not linked to ${ont.name}. Choose a suggestion to add the ID.`; chip.classList.add("warn");
+    } else chip.textContent = `Type to search ${ont.name}`;
+  };
+  paint(); host.append(chip);
+  inp.setAttribute("autocomplete", "off");
+  inp.addEventListener("input", () => {
+    paint(); clearTimeout(ddTimer);
+    const q = inp.value.trim();
+    if (q.length < 2) return closeDD();
+    ddTimer = setTimeout(async () => {
+      showDD(inp, []);
+      const res = await searchOntology(key, q);
+      if (document.activeElement !== inp) return closeDD();
+      showDD(inp, res.items, res.online, t => {
+        inp.value = t.label; obj[field] = t.label;
+        if (t.id) obj[idKey] = t.id; else delete obj[idKey];
+        inp.closest(".missing")?.classList.remove("missing");
+        persist(); paint(); closeDD();
+      });
+    }, 300);
+  });
+  inp.addEventListener("blur", () => setTimeout(closeDD, 150));
+}
+
+/* ================== RENDERING ================== */
+function renderAll() { renderSidebar(); renderTabs(); renderView(); }
+
+function renderSidebar() {
+  const ul = $("recordList"); ul.innerHTML = "";
+  db.records.forEach(r => {
+    const li = el("li"), b = el("button", r.id === db.currentId ? "rec active" : "rec");
+    const n = r.analyses.length;
+    b.append(el("strong", null, r.acquisition.study_name || "Untitled study"),
+             el("small", null, `v${r.acquisition.version || 1} · ${n} analysis form${n === 1 ? "" : "s"}`));
+    b.onclick = () => { db.currentId = r.id; state = { tab: "acq", ana: 0, showMissing: false }; save(); renderAll(); };
+    li.append(b); ul.append(li);
+  });
+}
+
+function renderTabs() {
+  const nav = $("tabs"); nav.innerHTML = "";
+  [["acq", "1. Image acquisition"], ["ana", `2. Image analysis (${cur().analyses.length})`], ["out", "3. Folder structure & export"]]
+    .forEach(([k, t]) => {
+      const b = el("button", k === state.tab ? "active" : "", t);
+      b.onclick = () => { state.tab = k; state.showMissing = false; renderTabs(); renderView(); };
+      nav.append(b);
+    });
+}
+
+function renderView() {
+  closeDD();
+  const main = $("view"); main.innerHTML = "";
+  ({ acq: viewAcq, ana: viewAna, out: viewOut })[state.tab](main);
+  updateProgress();
+}
+
+function actions(list) {
+  const d = el("div", "actions");
+  list.filter(Boolean).forEach(([label, fn, cls]) => { const b = el("button", cls || "", label); b.onclick = fn; d.append(b); });
+  return d;
+}
+
+function fieldEl(fd, obj, link) {
+  const wide = fd.type === "textarea" || fd.wide;
+  const w = el("label", "field" + (wide ? " wide" : ""));
+  w.append(el("span", null, fd.label + (fd.req ? " *" : "")));
+  let inp;
+  if (fd.type === "select") {
+    inp = document.createElement("select");
+    ["", ...fd.options].forEach(o => { const op = el("option", null, o || "— select —"); op.value = o; inp.append(op); });
+  } else if (fd.type === "textarea") {
+    inp = document.createElement("textarea"); inp.rows = 3;
+  } else {
+    inp = document.createElement("input"); inp.type = fd.type;
+    if (fd.list) inp.setAttribute("list", "dl-" + fd.list);
+  }
+  if (fd.linked) {
+    obj[fd.id] = (link && link[fd.linked]) || "";
+    if (link && link[fd.linked + "_id"]) obj[fd.id + "_id"] = link[fd.linked + "_id"]; else delete obj[fd.id + "_id"];
+    inp.readOnly = true; w.classList.add("linked");
+  }
+  if (fd.readonly) inp.readOnly = true;
+  inp.value = obj[fd.id] ?? "";
+  if (state.showMissing && fd.req && !String(obj[fd.id] ?? "").trim()) w.classList.add("missing");
+  inp.addEventListener("input", () => {
+    obj[fd.id] = inp.value; if (fd.ont) delete obj[fd.id + "_id"];
+    w.classList.remove("missing"); persist();
+  });
+  w.append(inp);
+  if (fd.ont && !fd.linked) attachOntology(inp, fd.ont, obj, fd.id, w);
+  else if (fd.ont && obj[fd.id + "_id"]) w.append(el("span", "ont-chip", "✓ " + obj[fd.id + "_id"]));
+  if (fd.help) w.append(el("small", null, fd.help));
+  return w;
+}
+
+function tableEl(t, obj) {
+  const rows = obj[t.id] ||= [{}];
+  const wrap = el("div", "table-wrap");
+  if (t.title) wrap.append(el("h4", null, t.title));
+  if (t.help) wrap.append(el("p", "note", t.help));
+  const tbl = el("table"), thead = el("thead"), hr = el("tr");
+  t.cols.forEach(c => hr.append(el("th", null, c.label + (c.req ? " *" : ""))));
+  hr.append(el("th", null, "")); thead.append(hr); tbl.append(thead);
+  const tb = el("tbody");
+  rows.forEach((row, i) => {
+    const tr = el("tr");
+    t.cols.forEach(c => {
+      const td = el("td"), inp = document.createElement("input");
+      inp.type = c.type || "text";
+      if (c.list) inp.setAttribute("list", "dl-" + c.list);
+      if (c.ph) inp.placeholder = c.ph;
+      inp.setAttribute("aria-label", `${c.label}, row ${i + 1}`);
+      inp.value = row[c.id] ?? "";
+      if (state.showMissing && c.req && !String(row[c.id] ?? "").trim()) td.classList.add("missing");
+      inp.addEventListener("input", () => {
+        row[c.id] = inp.value; if (c.ont) delete row[c.id + "_id"];
+        td.classList.remove("missing"); persist();
+      });
+      td.append(inp);
+      if (c.ont) attachOntology(inp, c.ont, row, c.id, td);
+      tr.append(td);
+    });
+    const td = el("td");
+    if (rows.length > 1) {
+      const b = el("button", "small", "✕"); b.title = "Remove row";
+      b.onclick = () => { rows.splice(i, 1); persist(); renderView(); };
+      td.append(b);
+    }
+    tr.append(td); tb.append(tr);
+  });
+  tbl.append(tb); wrap.append(tbl);
+  const add = el("button", "small", "+ Add row");
+  add.onclick = () => { rows.push({}); persist(); renderView(); };
+  wrap.append(add);
+  return wrap;
+}
+
+function renderSections(schema, obj, root, link) {
+  schema.forEach(sec => {
+    const fs = el("fieldset"), lg = el("legend", null, sec.title);
+    if (sec.rembi) lg.append(el("span", "badge", "REMBI: " + sec.rembi));
+    fs.append(lg);
+    if (sec.note) fs.append(el("p", "note", sec.note));
+    if (sec.fields) { const g = el("div", "grid"); sec.fields.forEach(fd => g.append(fieldEl(fd, obj, link))); fs.append(g); }
+    if (sec.table) fs.append(tableEl(sec.table, obj));
+    root.append(fs);
+  });
+}
+
+/* ---------- Tab 1: Acquisition ---------- */
+function viewAcq(main) {
+  main.append(actions([
+    ["Check required fields", check],
+    ["Export Excel (.xlsx)", () => exportXlsx()],
+    canSubmit() && ["Submit to facility", () => submitForm("acq")],
+    ["Email copy", () => email("acq")],
+    ["Save as new version", newVersion],
+    ["Print / save as PDF", () => window.print()],
+    ["Delete study record", deleteRecord, "danger"],
+  ]));
+  renderSections(ACQ, cur().acquisition, main);
+}
+
+/* ---------- Tab 2: Analysis ---------- */
+function viewAna(main) {
+  const r = cur();
+  if (!r.analyses.length) {
+    const d = el("div", "empty");
+    d.append(el("p", null, "No analysis forms yet. Each image dataset has one acquisition form but can have many analysis forms, for example when the same images are analysed in different ways or by different people."));
+    const b = el("button", "primary", "+ New analysis form"); b.onclick = addAna; d.append(b);
+    main.append(d); return;
+  }
+  state.ana = Math.min(state.ana, r.analyses.length - 1);
+  const picker = el("div", "picker");
+  r.analyses.forEach((n, i) => {
+    const name = n.steps?.[0]?.name;
+    const b = el("button", i === state.ana ? "chip active" : "chip", `Analysis ${i + 1}${name ? ": " + name : ""} (${n.date || "no date"})`);
+    b.onclick = () => { state.ana = i; state.showMissing = false; renderView(); };
+    picker.append(b);
+  });
+  main.append(picker);
+  main.append(actions([
+    ["+ New analysis form", addAna],
+    ["Duplicate this form", dupAna],
+    ["Check required fields", check],
+    ["Export Excel (this analysis)", () => exportXlsx([state.ana])],
+    canSubmit() && ["Submit to facility", () => submitForm("ana")],
+    ["Email copy", () => email("ana")],
+    ["Print / save as PDF", () => window.print()],
+    ["Delete this analysis", delAna, "danger"],
+  ]));
+  renderSections(ANA, r.analyses[state.ana], main, r.acquisition);
+}
+
+/* ---------- Tab 3: Folder structure & export ---------- */
+function viewOut(main) {
+  const r = cur(), S = safe(r.acquisition.study_name) || "Study";
+  const fs1 = el("fieldset"); fs1.append(el("legend", null, "Suggested folder structure"));
+  fs1.append(el("p", "note", "Generated from your entries. Use it when saving data to backed-up storage so the data can be found later and uploaded to the BioImage Archive."));
+  const tree = folderTree(r); fs1.append(el("pre", null, tree));
+  const cp = el("button", "small", "Copy to clipboard");
+  cp.onclick = () => navigator.clipboard?.writeText(tree).then(() => cp.textContent = "Copied", () => alert("Copy is not available here. Please select the text and copy it manually."));
+  fs1.append(cp); main.append(fs1);
+
+  const fs2 = el("fieldset"); fs2.append(el("legend", null, "Export and back up"));
+  fs2.append(el("p", "note", "The Excel workbook reproduces the original Image Acquisition and Image Analysis form layouts, plus a machine-readable REMBI sheet. The blank forms are for sites using the spreadsheet-only route, such as a pen drive in a containment lab."));
+  fs2.append(actions([
+    ["Excel workbook: all forms (.xlsx)", () => exportXlsx()],
+    ["Blank Excel forms (.xlsx)", exportBlank],
+    ["README for data folder (.txt)", () => download(`${S}_README_metadata.txt`, readme(r), "text/plain")],
+    ["REMBI summary (.tsv)", () => download(`${S}_REMBI_summary.tsv`, rembiTSV(r), "text/tab-separated-values")],
+    ["This study record (.json)", () => download(`${S}_record.json`, JSON.stringify(r, null, 2), "application/json")],
+    ["Back up all records (.json)", () => download(`bioimage-metadata-backup-${today()}.json`, JSON.stringify(db, null, 2), "application/json")],
+    ["Import JSON", () => $("importFile").click()],
+  ]));
+  main.append(fs2);
+
+  const fs3 = el("fieldset"); fs3.append(el("legend", null, "Connections"));
+  fs3.append(el("p", "note", backend
+    ? `Facility server connected (${backend}). "Submit to facility" saves the forms to facility storage and emails them automatically.`
+    : CONFIG.powerAutomateUrl ? `Power Automate configured. "Submit to facility" sends the forms to your flow.`
+    : `Standalone mode: no server configured. Use the Excel export and "Email copy".`));
+  fs3.append(el("p", "note", `Ontology lookup uses the EMBL-EBI Ontology Lookup Service${backend ? " via the facility server" : ""} when online, with a built-in offline list of common organisms.`));
+  if (r.submissions?.length) {
+    const last = r.submissions[r.submissions.length - 1];
+    fs3.append(el("p", "note", `Submitted ${r.submissions.length} time(s). Last: ${last.date.slice(0, 16).replace("T", " ")} (${last.kind}) → ${last.saved || "sent"}`));
+  }
+  main.append(fs3);
+
+  const fs4 = el("fieldset"); fs4.append(el("legend", null, "REMBI mapping preview"));
+  const wrap = el("div", "table-wrap"), tbl = el("table");
+  rembiRows(r).forEach((row, i) => {
+    const tr = el("tr"); row.forEach(v => tr.append(el(i ? "td" : "th", null, v))); tbl.append(tr);
+  });
+  wrap.append(tbl); fs4.append(wrap); main.append(fs4);
+}
+
+/* ================== ACTIONS ================== */
+function currentSchemaObj() {
+  const r = cur();
+  if (state.tab === "acq") return [ACQ, r.acquisition];
+  if (state.tab === "ana" && r.analyses.length) return [ANA, r.analyses[state.ana]];
+  return [null, null];
+}
+function missing(schema, obj) {
+  const m = [];
+  schema.forEach(sec => {
+    (sec.fields || []).forEach(fd => { if (fd.req && !String(obj[fd.id] ?? "").trim()) m.push(`${sec.title}: ${fd.label}`); });
+    if (sec.table) (obj[sec.table.id] || [{}]).forEach((row, i) => sec.table.cols.forEach(c => {
+      if (c.req && !String(row[c.id] ?? "").trim()) m.push(`${sec.table.title} (row ${i + 1}): ${c.label}`);
+    }));
+  });
+  return m;
+}
+
+function countReq(schema, obj) {
+  let t = 0;
+  schema.forEach(sec => {
+    (sec.fields || []).forEach(fd => { if (fd.req) t++; });
+    if (sec.table) t += sec.table.cols.filter(c => c.req).length * Math.max(1, (obj[sec.table.id] || []).length);
+  });
+  return t;
+}
+
+function updateProgress() {
+  const [schema, obj] = currentSchemaObj();
+  $("progressWrap").style.visibility = schema ? "visible" : "hidden";
+  if (!schema) return;
+  const t = countReq(schema, obj), pct = t ? Math.round(100 * (t - missing(schema, obj).length) / t) : 100;
+  $("progress").value = pct; $("pct").textContent = pct + "%";
+}
+
+function check() {
+  const [schema, obj] = currentSchemaObj();
+  state.showMissing = true; renderView();
+  const m = missing(schema, obj);
+  alert(m.length ? `Missing required fields (${m.length}):\n\n• ${m.join("\n• ")}` : "All required fields are complete.");
+}
+
+function newVersion() {
+  const r = cur();
+  if (!confirm("Save the current form as a previous version and start version " + ((+r.acquisition.version || 1) + 1) + "?")) return;
+  r.history.push(clone(r.acquisition));
+  r.acquisition.version = (+r.acquisition.version || 1) + 1;
+  r.acquisition.date_filled = today();
+  persist(); renderView();
+}
+
+function deleteRecord() {
+  if (!confirm("Delete this whole study record, including all its analysis forms? This cannot be undone.")) return;
+  db.records = db.records.filter(r => r.id !== db.currentId);
+  if (!db.records.length) return newRecord();
+  db.currentId = db.records[0].id; state = { tab: "acq", ana: 0, showMissing: false };
+  save(); renderAll();
+}
+
+function addAna() { const r = cur(); r.analyses.push(newAna()); state.ana = r.analyses.length - 1; state.tab = "ana"; state.showMissing = false; persist(); renderAll(); }
+function dupAna() { const r = cur(); const c = clone(r.analyses[state.ana]); c.date = today(); r.analyses.push(c); state.ana = r.analyses.length - 1; persist(); renderAll(); }
+function delAna() {
+  if (!confirm("Delete this analysis form?")) return;
+  cur().analyses.splice(state.ana, 1); state.ana = Math.max(0, state.ana - 1); persist(); renderAll();
+}
+
+/* ================== XLSX WRITER (no external libraries, works offline) ================== */
+const XLSX = (() => {
+  const enc = new TextEncoder();
+  const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+  const RNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const PNS = "http://schemas.openxmlformats.org/package/2006/relationships";
+  const HDR = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const S = { normal: 0, title: 1, label: 2, value: 3, help: 4, th: 5, section: 6 };
+  const esc = s => String(s ?? "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const col = n => { let s = ""; n++; while (n) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+
+  function zip(files) {
+    const parts = [], central = []; let offset = 0;
+    const d = new Date();
+    const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    files.forEach(f => {
+      const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(lh.buffer, name, data);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+      ch.setUint16(10, 0, true); ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+      ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+      ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+      ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+      central.push(ch.buffer, name);
+      offset += 30 + name.length + data.length;
+    });
+    const cdSize = central.reduce((s, p) => s + p.byteLength, 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(4, 0, true); end.setUint16(6, 0, true);
+    end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true); end.setUint16(20, 0, true);
+    return new Blob([...parts, ...central, end.buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  }
+
+  class Sheet {
+    constructor(name, widths) { this.name = name.replace(/[\[\]:*?\/\\]/g, "").slice(0, 31); this.widths = widths; this.rows = []; this.merges = []; this.landscape = false; }
+    add(cells = [], minHeight) {
+      const r = this.rows.length, out = []; let c = 0, lines = 1, isTitle = false;
+      cells.forEach(cell => {
+        const span = cell.span || 1, text = String(cell.v ?? ""), s = cell.s || 0;
+        if (s === S.title) isTitle = true;
+        out.push({ c, v: text, s });
+        for (let k = 1; k < span; k++) out.push({ c: c + k, v: "", s });
+        if (span > 1) this.merges.push(`${col(c)}${r + 1}:${col(c + span - 1)}${r + 1}`);
+        const w = this.widths.slice(c, c + span).reduce((a, b) => a + b, 0);
+        const factor = s === S.title ? 0.75 : s === S.help ? 1.4 : 1.15;
+        const cpl = Math.max(1, Math.floor(w * factor));
+        lines = Math.max(lines, text.split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length / cpl)), 0));
+        c += span;
+      });
+      const ht = cells.length ? Math.max(minHeight || 0, lines * 15 + (isTitle ? 9 : 0)) : (minHeight || 8);
+      this.rows.push({ cells: out, ht });
+    }
+    xml() {
+      const cols = this.widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("");
+      const rows = this.rows.map((row, ri) => `<row r="${ri + 1}" ht="${row.ht}" customHeight="1">` + row.cells.map(c => {
+        const ref = col(c.c) + (ri + 1);
+        return c.v === "" ? `<c r="${ref}" s="${c.s}"/>` : `<c r="${ref}" s="${c.s}" t="inlineStr"><is><t xml:space="preserve">${esc(c.v)}</t></is></c>`;
+      }).join("") + "</row>").join("");
+      const merges = this.merges.length ? `<mergeCells count="${this.merges.length}">${this.merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : "";
+      return `${HDR}<worksheet xmlns="${NS}" xmlns:r="${RNS}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>` +
+        `<sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/>` +
+        `<cols>${cols}</cols><sheetData>${rows}</sheetData>${merges}` +
+        `<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>` +
+        `<pageSetup paperSize="9" orientation="${this.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+    }
+  }
+
+  const font = (extra = "") => `<font>${extra}<name val="Calibri"/><family val="2"/></font>`;
+  const align = a => `<alignment ${a}/>`;
+  const xf = (f, fill, b, a) => `<xf numFmtId="0" fontId="${f}" fillId="${fill}" borderId="${b}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">${a ? align(a) : ""}</xf>`;
+  const BC = '<color rgb="FF9AA8B8"/>';
+  const STYLES = `${HDR}<styleSheet xmlns="${NS}">` +
+    `<fonts count="5">${font('<sz val="11"/>')}${font('<b/><sz val="16"/><color rgb="FF1F5F99"/>')}${font('<b/><sz val="11"/>')}` +
+    `${font('<i/><sz val="9"/><color rgb="FF5A6270"/>')}${font('<b/><sz val="12"/><color rgb="FFFFFFFF"/>')}</fonts>` +
+    `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>` +
+    `<fill><patternFill patternType="solid"><fgColor rgb="FFE6F0FA"/><bgColor indexed="64"/></patternFill></fill>` +
+    `<fill><patternFill patternType="solid"><fgColor rgb="FF1F5F99"/><bgColor indexed="64"/></patternFill></fill></fills>` +
+    `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>` +
+    `<border><left style="thin">${BC}</left><right style="thin">${BC}</right><top style="thin">${BC}</top><bottom style="thin">${BC}</bottom><diagonal/></border></borders>` +
+    `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+    `<cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+    xf(1, 0, 0, 'vertical="center"') +                          // 1 title
+    xf(2, 2, 1, 'vertical="top" wrapText="1"') +                // 2 label
+    xf(0, 0, 1, 'vertical="top" wrapText="1"') +                // 3 value
+    xf(3, 0, 0, 'vertical="top" wrapText="1"') +                // 4 help
+    xf(2, 2, 1, 'horizontal="center" vertical="center" wrapText="1"') + // 5 table header
+    xf(4, 3, 1, 'vertical="center"') +                          // 6 section
+    `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+  function build(sheets) {
+    const n = sheets.length;
+    const files = [
+      { name: "[Content_Types].xml", data: `${HDR}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+        `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>` +
+        `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
+        `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>` +
+        sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + `</Types>` },
+      { name: "_rels/.rels", data: `${HDR}<Relationships xmlns="${PNS}"><Relationship Id="rId1" Type="${RNS}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+      { name: "xl/workbook.xml", data: `${HDR}<workbook xmlns="${NS}" xmlns:r="${RNS}"><sheets>` +
+        sheets.map((s, i) => `<sheet name="${esc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("") + `</sheets></workbook>` },
+      { name: "xl/_rels/workbook.xml.rels", data: `${HDR}<Relationships xmlns="${PNS}">` +
+        sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="${RNS}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("") +
+        `<Relationship Id="rId${n + 1}" Type="${RNS}/styles" Target="styles.xml"/></Relationships>` },
+      { name: "xl/styles.xml", data: STYLES },
+      ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: s.xml() })),
+    ];
+    return zip(files);
+  }
+  return { Sheet, S, build };
+})();
+
+/* ---------- Original form layouts ---------- */
+function samplePrepText(a) {
+  const L = [];
+  if (a.prep_medium) L.push("Prepared on: " + a.prep_medium);
+  if (a.fixation || a.fixation_details) L.push("Fixation: " + [a.fixation, a.fixation_details].filter(Boolean).join(" (") + (a.fixation && a.fixation_details ? ")" : ""));
+  const reagents = (a.reagents || []).filter(rowHasData);
+  if (reagents.length) {
+    L.push("Staining:");
+    reagents.forEach(x => {
+      const extra = [x.manufacturer, x.product_code && "cat. " + x.product_code, x.dilution].filter(Boolean).join(", ");
+      L.push(`  • ${[x.target, x.reagent].filter(Boolean).join(": ")}${extra ? ` (${extra})` : ""}`);
+    });
+  }
+  if (a.contrast) L.push("Contrast: " + a.contrast);
+  if (a.prep_other) L.push("Other: " + a.prep_other);
+  return L.join("\n");
+}
+
+function acqSheet(r) {
+  const a = r.acquisition, S = XLSX.S;
+  const sh = new XLSX.Sheet("Image Acquisition", [13, 26, 10, 18, 11, 18, 36]);
+  sh.landscape = true;
+  const block = (label, value, help) => {
+    sh.add([{ v: label, s: S.label, span: 2 }, { v: value || "", s: S.value, span: 5 }], 24);
+    if (help) sh.add([{ v: "", span: 2 }, { v: help, s: S.help, span: 5 }]);
+  };
+  sh.add([{ v: "Image Acquisition form (Vi)", s: S.title, span: 7 }]);
+  sh.add([{ v: `Date filled in: ${a.date_filled || ""}        Version: ${a.version || ""}`, s: S.help, span: 7 }]);
+  sh.add([]);
+  block("Study Name", a.study_name, "If you don't have a paper title a running title is ok. Ideally make this match with the name of the folder.");
+  block("Biosample", valOnt(a, "biosample"), "e.g. Danio rerio or Pan troglodytes");
+  block("Specimen overview", [a.specimen_overview, a.specimen_type ? "Cell type / tissue: " + valOnt(a, "specimen_type") : ""].filter(Boolean).join("\n"),
+    "Include what the specimen is, any mutations, any treatments e.g. X concentration of drug for Y hours");
+  block("Sample Preparation", samplePrepText(a),
+    "Include: what medium the samples were prepared on (e.g. coverslips, well plates, slides); how the sample was fixed (e.g. 4% Paraformaldehyde, EM Grade or 100% Methanol); how the sample was stained, which epitope, which dyes or antibodies were used, with manufacturer and product code; any other information about how contrast was generated, e.g. Phase Contrast or DIC.");
+  sh.add([]);
+  sh.add([{ v: "Image Acquisition", s: S.section, span: 7 }], 20);
+  sh.add(["Date", "Microscope", "Replicate", "Acquired by", "Lens", "Channel Info", "Other info"].map(v => ({ v, s: S.th })), 20);
+  const sess = (a.sessions || []).filter(rowHasData);
+  for (let i = 0; i < Math.max(4, sess.length); i++) {
+    const s = sess[i] || {};
+    const scope = [s.microscope, s.method ? valOnt(s, "method") : ""].filter(Boolean).join(" — ");
+    sh.add([s.date, scope, s.replicate, s.acquired_by, s.lens, s.channels, s.other].map(v => ({ v: v || "", s: S.value })), 22);
+  }
+  sh.add([]);
+  block("Location of data on Datastore", a.data_location);
+  block("Method for imaging", a.imaging_method);
+  block("Comments", a.comments);
+  sh.add([]);
+  sh.add([{ v: "Contacts", s: S.section, span: 7 }], 20);
+  block("Submitted by", [a.submitter_name, a.submitter_email].filter(Boolean).join(" · "));
+  block("PI / Grant holder", [a.pi_name, a.pi_email].filter(Boolean).join(" · "));
+  block("Data owner", a.owner_email);
+  block("Facility / RDM", a.facility_email);
+  sh.add([]);
+  sh.add([{ v: `Generated by Bioimage Metadata Recorder on ${today()} · REMBI-aligned · Ontology IDs shown in [brackets]`, s: S.help, span: 7 }]);
+  return sh;
+}
+
+function anaSheet(r, n, i) {
+  const a = r.acquisition, S = XLSX.S;
+  const sh = new XLSX.Sheet(`Image Analysis ${i + 1}`, [30, 16, 34, 24]);
+  const line = (label, value) => sh.add([{ v: label, s: S.label }, { v: value || "", s: S.value, span: 3 }], 22);
+  sh.add([{ v: "Image analysis Summary Form", s: S.title, span: 4 }]);
+  sh.add([{ v: `Linked to Image Acquisition form version ${a.version || ""}`, s: S.help, span: 4 }]);
+  sh.add([]);
+  line("Study", a.study_name);
+  line("Biosample", valOnt(a, "biosample"));
+  line("Specimen", a.specimen_overview);
+  line("Image Analysis Folder Path", n.folder_path);
+  line("Date", n.date);
+  line("Analysed by", [n.analyst_name, n.analyst_email].filter(Boolean).join(" · "));
+  line("Details of Analysis done", n.details);
+  line("Images Analysed", n.images_analysed);
+  line("Path for input data", n.input_path);
+  line("Path for output data", n.output_path);
+  sh.add([]);
+  sh.add(["Name", "Date Analysed", "Software used", "Output data format"].map(v => ({ v, s: S.th })), 20);
+  const steps = (n.steps || []).filter(rowHasData);
+  for (let k = 0; k < Math.max(5, steps.length); k++) {
+    const s = steps[k] || {};
+    sh.add([s.name, s.date_analysed, s.software, s.output_format].map(v => ({ v: v || "", s: S.value })), 22);
+  }
+  sh.add([]);
+  line("Comments", n.comments);
+  line("Statistical Analysis location", n.stats_location);
+  sh.add([]);
+  sh.add([{ v: `Generated by Bioimage Metadata Recorder on ${today()} · REMBI-aligned`, s: S.help, span: 4 }]);
+  return sh;
+}
+
+function rembiSheet(r, list) {
+  const sh = new XLSX.Sheet("REMBI (machine-readable)", [24, 22, 34, 70]);
+  rembiRows(r, list).forEach((row, i) => sh.add(row.map(v => ({ v, s: i ? XLSX.S.value : XLSX.S.th }))));
+  return sh;
+}
+
+function buildWorkbook(r, idx) {
+  const list = idx ?? r.analyses.map((_, i) => i);
+  return XLSX.build([acqSheet(r), ...list.map(i => anaSheet(r, r.analyses[i], i)), rembiSheet(r, list)]);
+}
+
+const xlsxName = (r, suffix = "") => `${safe(r.acquisition.study_name) || "Study"}_metadata_v${r.acquisition.version || 1}_${r.acquisition.date_filled || today()}${suffix}.xlsx`;
+function exportXlsx(idx) { const r = cur(); download(xlsxName(r, idx ? `_analysis${idx[0] + 1}` : ""), buildWorkbook(r, idx)); }
+function exportBlank() {
+  const blank = { acquisition: {}, analyses: [{}] };
+  download("Blank_Image_Acquisition_and_Analysis_forms.xlsx", XLSX.build([acqSheet(blank), anaSheet(blank, {}, 0)]));
+}
+
+/* ================== OTHER EXPORTS ================== */
+function download(name, content, type) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function formText(title, schema, obj) {
+  let s = `=== ${title} ===\n`;
+  schema.forEach(sec => {
+    s += `\n[${sec.title}]\n`;
+    (sec.fields || []).forEach(fd => { const v = fv(fd, obj); if (v.trim()) s += `${fd.label}: ${v}\n`; });
+    if (sec.table) (obj[sec.table.id] || []).forEach((row, i) => {
+      const parts = sec.table.cols.map(c => [c.label, fv(c, row)]).filter(([, v]) => v.trim()).map(([l, v]) => `${l}: ${v}`);
+      if (parts.length) s += `  ${i + 1}. ${parts.join("; ")}\n`;
+    });
+  });
+  return s;
+}
+
+function folderTree(r) {
+  const a = r.acquisition, S = safe(a.study_name) || "Study_Name";
+  const L = [`${S}/`, `├── ${S}_README_metadata.txt`, `├── Metadata/`,
+             `│   ├── ${xlsxName(r)}   (all forms)`, `│   └── ${S}_REMBI_summary.tsv`, `├── Raw_Data/`];
+  const sess = (a.sessions || []).filter(s => s.date || s.microscope || s.replicate);
+  if (!sess.length) L.push(`│   ├── YYYY-MM-DD_Microscope_Rep1/`);
+  sess.forEach(s => L.push(`│   ├── ${[s.date || "YYYY-MM-DD", safe(s.microscope) || "Microscope", "Rep" + (safe(s.replicate) || "N")].join("_")}/`));
+  L.push(`├── Analysis/`);
+  if (!r.analyses.length) L.push(`│   ├── YYYY-MM-DD_AnalysisName/`);
+  r.analyses.forEach((n, i) => {
+    L.push(`│   ├── ${n.date || "YYYY-MM-DD"}_${safe(n.steps?.[0]?.name) || "Analysis" + (i + 1)}/`,
+           `│   │   ├── input/   (or a note pointing to Raw_Data)`, `│   │   └── output/`);
+  });
+  L.push(`└── Statistics/`);
+  return L.join("\n");
+}
+
+function readme(r) {
+  const a = r.acquisition;
+  return `BIOIMAGE METADATA RECORD (REMBI)\nStudy: ${a.study_name || ""}\nGenerated: ${new Date().toISOString()}\n\n` +
+    `Keep this file in the top level of the study folder alongside the data.\n\nSUGGESTED FOLDER STRUCTURE\n${folderTree(r)}\n\n` +
+    formText("IMAGE ACQUISITION FORM (version " + (a.version || 1) + ")", ACQ, a) + "\n" +
+    r.analyses.map((n, i) => formText(`IMAGE ANALYSIS SUMMARY FORM ${i + 1}`, ANA, n)).join("\n");
+}
+
+function rembiRows(r, list) {
+  const idx = list ?? r.analyses.map((_, i) => i);
+  const rows = [["REMBI component", "Source form", "Field", "Value"]];
+  const add = (schema, obj, src) => schema.forEach(sec => {
+    const comp = sec.rembi || "Administrative";
+    (sec.fields || []).forEach(fd => { const v = fv(fd, obj); if (v.trim()) rows.push([comp, src, fd.label, v]); });
+    if (sec.table) (obj[sec.table.id] || []).forEach((row, i) => {
+      const v = sec.table.cols.map(c => [c.label, fv(c, row)]).filter(([, x]) => x.trim()).map(([l, x]) => `${l}: ${x}`).join("; ");
+      if (v) rows.push([comp, src, `${sec.table.title} ${i + 1}`, v]);
+    });
+  });
+  add(ACQ, r.acquisition, "Image Acquisition");
+  idx.forEach(i => add(ANA, r.analyses[i], `Image Analysis ${i + 1}`));
+  return rows;
+}
+const rembiTSV = r => rembiRows(r).map(row => row.map(v => String(v).replace(/[\t\r\n]+/g, " ")).join("\t")).join("\n");
+
+/* ================== EMAIL & SUBMISSION ================== */
+function recipients(kind) {
+  const r = cur(), a = r.acquisition;
+  const to = [a.pi_email, a.owner_email, a.facility_email || CONFIG.facilityEmail, a.submitter_email];
+  if (kind === "ana") to.push(r.analyses[state.ana]?.analyst_email);
+  return [...new Set(to.map(x => (x || "").trim()).filter(Boolean))];
+}
+function subjectFor(kind) {
+  const r = cur(), a = r.acquisition;
+  return kind === "acq"
+    ? `Image acquisition metadata: ${a.study_name || "Untitled"} (v${a.version}, ${a.date_filled})`
+    : `Image analysis summary: ${a.study_name || "Untitled"} (${r.analyses[state.ana].date})`;
+}
+function bodyFor(kind) {
+  const r = cur(), a = r.acquisition;
+  return `Metadata record for data stored at: ${a.data_location || "[location not yet entered]"}\n\n` +
+    (kind === "acq" ? formText("Image Acquisition form", ACQ, a) : formText("Image Analysis Summary form", ANA, r.analyses[state.ana]));
+}
+
+function email(kind) {
+  const a = cur().acquisition;
+  const list = recipients(kind).filter(x => x !== a.submitter_email);
+  if (!list.length) { alert("Please add at least one email address in the Contacts section of the acquisition form."); return; }
+  let body = bodyFor(kind);
+  if (body.length > 1800) body = body.slice(0, 1800) + "\n\n[Truncated: please attach the exported Excel file]";
+  const cc = a.submitter_email ? `cc=${encodeURIComponent(a.submitter_email)}&` : "";
+  window.location.href = `mailto:${list.map(encodeURIComponent).join(",")}?${cc}subject=${encodeURIComponent(subjectFor(kind))}&body=${encodeURIComponent(body)}`;
+}
+
+const blobToB64 = b => new Promise((res, rej) => {
+  const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = rej; fr.readAsDataURL(b);
+});
+
+async function submitForm(kind) {
+  const r = cur(), a = r.acquisition, isAcq = kind === "acq";
+  const [schema, obj] = currentSchemaObj();
+  if (!schema) return;
+  const m = missing(schema, obj);
+  if (m.length && !confirm(`${m.length} required field(s) are still empty. Submit anyway?`)) return;
+
+  const idx = isAcq ? undefined : [state.ana];
+  let attachment;
+  try {
+    attachment = {
+      filename: xlsxName(r, isAcq ? "" : `_analysis${state.ana + 1}`),
+      content_base64: await blobToB64(buildWorkbook(r, idx))
+    };
+  } catch {
+    alert("The Excel file could not be created for submission. Please use 'Export Excel' and 'Email copy' instead.");
+    return;
+  }
+
+  const payload = {
+    kind: isAcq ? "acquisition" : "analysis",
+    analysis_index: isAcq ? null : state.ana,
+    study: a.study_name || "Untitled",
+    to: recipients(kind).join("; "),
+    subject: subjectFor(kind),
+    summary: bodyFor(kind),
+    record: r,
+    attachments: [attachment]
+  };
+
+  const url = backend ? backend + "/api/submit" : CONFIG.powerAutomateUrl;
+  const headers = { "Content-Type": "application/json" };
+  if (backend && CONFIG.apiKey) headers["X-API-Key"] = CONFIG.apiKey;
+
+  $("status").textContent = "Submitting…";
+  try {
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 60000);
+    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload), signal: ctrl.signal });
+    clearTimeout(t);
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.error || `server responded ${res.status}`);
+
+    (r.submissions ||= []).push({
+      date: new Date().toISOString(), kind: payload.kind,
+      saved: j.saved || "", emailed: j.recipients || []
+    });
+    persist();
+    $("status").textContent = "Submitted at " + new Date().toLocaleTimeString();
+
+    let msg = `Submitted.\n\nSaved to: ${j.saved || "facility storage"}`;
+    msg += j.emailed
+      ? `\nEmailed to: ${(j.recipients || []).join(", ")}`
+      : `\nNo email was sent${j.email_error ? ` (${j.email_error})` : ""}.`;
+    if (j.rejected?.length) msg += `\nNot emailed (outside allowed domains): ${j.rejected.join(", ")}`;
+    alert(msg);
+    if (state.tab === "out") renderView();
+  } catch (e) {
+    $("status").textContent = "Submission failed";
+    const reason = e.name === "AbortError" ? "the server took too long to respond" : e.message;
+    alert(`Submission failed: ${reason}\n\nThe record is still saved in this browser. ` +
+          `You can use 'Export Excel (.xlsx)' and 'Email copy' instead, or try again later.`);
+  }
+}
+
+/* ================== IMPORT ================== */
+$("importFile").onchange = e => {
+  const file = e.target.files[0]; if (!file) return;
+  file.text().then(t => {
+    try {
+      const p = JSON.parse(t);
+      const incoming = p.records ? p.records : p.acquisition ? [p] : null;
+      if (!incoming || !incoming.length) throw new Error();
+      incoming.forEach(rec => {
+        rec.acquisition ||= newAcq();
+        rec.analyses ||= []; rec.history ||= [];
+        if (!rec.id || db.records.some(x => x.id === rec.id)) rec.id = uid();
+        db.records.unshift(rec);
+      });
+      db.currentId = incoming[0].id;
+      state = { tab: "acq", ana: 0, showMissing: false };
+      save(); renderAll();
+      alert(`Imported ${incoming.length} record(s).`);
+    } catch {
+      alert("This file could not be read. Please choose a JSON file exported from this app.");
+    }
+  });
+  e.target.value = "";
+};
+
+/* ================== BACKEND DETECTION ==================
+   Looks for the Flask server: first CONFIG.backendUrl, then the address
+   the page was served from. Opened as a local file, the app stays standalone. */
+async function detectBackend() {
+  const candidates = [];
+  if (CONFIG.backendUrl) candidates.push(CONFIG.backendUrl.replace(/\/+$/, ""));
+  if (location.protocol === "http:" || location.protocol === "https:")
+    candidates.push(new URL(".", location.href).href.replace(/\/+$/, ""));
+  for (const base of [...new Set(candidates)]) {
+    try {
+      const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 3000);
+      const res = await fetch(base + "/api/health", { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) continue;
+      const j = await res.json();
+      if (j.app === "bioimage-metadata-recorder") {
+        backend = base; backendInfo = j;
+        if (!CONFIG.facilityEmail && j.facility_email) CONFIG.facilityEmail = j.facility_email;
+        return true;
+      }
+    } catch { /* not available: stay standalone */ }
+  }
+  return false;
+}
+
+/* ================== START ================== */
+(function init() {
+  // Suggestion lists for typed fields
+  const dl = $("datalists");
+  [["microscopes", CONFIG.microscopes], ["lenses", CONFIG.lenses],
+   ["software", CONFIG.software], ["formats", CONFIG.formats]].forEach(([id, items]) => {
+    const d = document.createElement("datalist"); d.id = "dl-" + id;
+    (items || []).forEach(v => { const o = document.createElement("option"); o.value = v; d.append(o); });
+    dl.append(d);
+  });
+
+  // Make records from older versions of the app compatible
+  db.records = (db.records || []).filter(r => r && r.acquisition);
+  db.records.forEach(r => { r.analyses ||= []; r.history ||= []; r.id ||= uid(); });
+
+  $("newRecord").onclick = newRecord;
+  if (!db.records.length) newRecord();
+  else {
+    if (!cur()) db.currentId = db.records[0].id;
+    renderAll();
+  }
+
+  // Show the "Submit to facility" button if a server is found
+  detectBackend().then(found => {
+    if (found) {
+      $("status").textContent = "Connected to facility server";
+      renderAll();
+    }
+  });
+})();
+</script>
+</body>
+</html>
