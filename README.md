@@ -1,8 +1,15 @@
 # Bioimage Metadata Recorder
 
+## 🌐 [OPEN THE BIOIMAGE METADATA RECORDER IN YOUR BROWSER](https://datamanagermvls.github.io/bioimage-metadata-recorder/)
+
+**[▶ LAUNCH THE WEB APPLICATION](https://datamanagermvls.github.io/bioimage-metadata-recorder/)** · [View the HTML source](index.html)
+
+> **Hackathon prototype.** The browser link uses GitHub Pages; deployment and full functionality have not yet been independently verified. If the link is unavailable, download `index.html` and open it locally in a browser. Offline operation and exports still require testing. Records may be held in browser storage: export backups regularly. No direct BioImage Archive submission is provided.
+
+
 Prototype for recording REMBI-aligned light microscopy acquisition and image analysis metadata.
 
-Open `index.html` in a browser to try it. Records are stored locally in the browser; export backups regularly. This is a hackathon prototype and does not directly submit to BioImage Archive.
+Use the prominent launch link above to try the prototype, or open the local `index.html` file.
 
 See `docs/hackathon-plan.md` for the development plan and [GitHub issues](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues) for priorities, especially [#12: effortless researcher-led metadata capture and PI buy-in](https://github.com/DataManagerMVLS/bioimage-metadata-recorder/issues/12).
 
@@ -12,7 +19,7 @@ The repository is public; anyone can browse it, while write access requires a co
 
 The draft BioImage Archive file-list export is not a dataset submission or upload. Backend tests: `python -m pytest -q tests/test_backend.py`.
 
-A provisional Flask backend (`app.py`) is included, but the original GitLab `app.py` still needs to be obtained and compared. This repository was recreated because the original GitLab repository was inaccessible; it was not migrated. The repository is public and includes an MIT licence; copyright ownership and the authority to license original project material should be confirmed with the original contributors and any relevant institutions.
+A provisional Flask backend (`app.py`) is included, but the original GitLab `app.py` still needs to be obtained and compared. This repository was recreated because the original GitLab repository was inaccessible; it was not migrated. The repository is public, but no current open-source licence is offered pending agreement on copyright ownership and reuse permissions with the original contributors and relevant institutions. Earlier versions included an MIT licence; removing it does not necessarily revoke previously granted permissions.
 
 ## Project origins, authorship and acknowledgements
 
@@ -21,10 +28,10 @@ This GitHub repository is a reconstruction and continuation of the original Bioi
 The following contributors should be explicitly recognised for their roles:
 
 - **Ann Wheeler** (University of Edinburgh) — original project concept, scientific and microscopy metadata requirements, methodology and project leadership.
-- **Ewan McDowall** — **original application code author and project IT support**.
+- **Ewan McDowall** (University of Edinburgh) — **original application code author and project IT support**.
 - **Stephen Fox** (University of Glasgow) — research data management, FAIR alignment, reconstruction of the GitHub project, documentation and further development.
 
-See [CITATION.cff](CITATION.cff) for the software citation. The author order and final attribution should be reviewed and agreed with the contributors. **Software authorship does not itself establish copyright ownership**; the MIT licence and any rights in the original code should be confirmed with the relevant rights holders.
+See [CITATION.cff](CITATION.cff) for the software citation. The author order and final attribution should be reviewed and agreed with the contributors. **Software authorship does not itself establish copyright ownership**; rights in the original code and any future licence should be confirmed with the relevant rights holders.
 
 ## Background reading
 
