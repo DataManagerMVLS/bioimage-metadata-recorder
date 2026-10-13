@@ -30,6 +30,14 @@ The following contributors should be explicitly recognised for their roles:
 
 See [CITATION.cff](CITATION.cff) for the software citation. The author order and final attribution should be reviewed and agreed with the contributors. **Software authorship does not itself establish copyright ownership**; rights in the original code and any future licence should be confirmed with the relevant rights holders.
 
+## Licensing: code versus educational resources
+
+**Application source code (including `index.html` and `app.py`): no new open-source licence is currently granted.** Permission for reuse, adaptation or redistribution should be agreed with the relevant original contributors and institutional rights holders. Historical MIT-licensed versions may carry permissions already granted.
+
+**New, original hackathon training materials and checklists** may be made available under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) **once their authors or rights holders approve release**. This intended scope covers only educational resources expressly marked `CC BY 4.0` in the relevant file (for example, future microscope-side checklists and bioimaging DMP checklists); it does **not** cover application code, pre-existing papers, presentation slides, third-party graphics or other materials.
+
+When an educational resource is approved for CC BY 4.0, include an attribution statement identifying its authors, title, source URL, licence URL and any changes made. Do not assume all repository content is CC BY licensed.
+
 ## Background reading
 
 - [Data management for bioimaging: no-cost, easy-access tools for Edinburgh](https://libraryblogs.is.ed.ac.uk/datablog/2026/01/13/data-management-for-bioimaging-no-cost-easy-access-tools-for-edinburgh/) — University of Edinburgh Data Blog (13 January 2026). Context for practical bioimaging data management and metadata recording.
